@@ -1,0 +1,33 @@
+ITAG引脚复用
+{
+	PB4,PB3,PA15,PA14,PA13
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);  //使能GPIOB时钟和复用功能（要先打开复用才能修改复用功能）
+	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);       //要先开时钟，再重映射；这句表示关闭JTAG，使能SWD。
+}
+
+
+usart.c
+{
+    DMA 开启，等待数据。注意，如果中断发送数据帧的速率很快，MCU来不及处理此次接收到的数据，
+    中断又发来数据的话，这里不能开启，否则数据会被覆盖。有2种方式解决：
+ 
+    1. 在重新开启接收DMA通道之前，将Rx_Buf缓冲区里面的数据复制到另外一个数组中，
+    然后再开启DMA，然后马上处理复制出来的数据。
+ 
+    2. 建立双缓冲，重新配置DMA_MemoryBaseAddr的缓冲区地址，那么下次接收到的数据就会
+    保存到新的缓冲区中，不至于被覆盖。
+}
+if(USART_DMA_RX_LEN==13 && USART_DMA_RX_BUF[0]==0x7e && USART_DMA_RX_BUF[5]==0xef && USART_DMA_RX_BUF[6]==0x9e && USART_DMA_RX_BUF[8]==0xfc)
+		{		
+			/*接收完一次数据*/
+			Freq_Output_MODE=1;
+		}
+		else if(USART_DMA_RX_LEN==18 && USART_DMA_RX_BUF[0]==0x7e && USART_DMA_RX_BUF[19]==0xef )
+		{
+			/*接收完一次数据*/
+			Freq_Output_MODE=2;	
+		}
+		
+		
+		
